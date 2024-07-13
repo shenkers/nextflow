@@ -32,6 +32,8 @@ class FileInParam extends BaseInParam implements ArityParam, PathQualifier {
 
     protected filePattern
 
+    Boolean cache = false
+
     private boolean pathQualifier
 
     @Override String getTypeName() { pathQualifier ? 'path' : 'file' }
@@ -143,6 +145,11 @@ class FileInParam extends BaseInParam implements ArityParam, PathQualifier {
 
     FileInParam setName(String value) {
         this.filePattern = value
+        return this
+    }
+
+    FileInParam setCache(Boolean value) {
+        this.cache = value
         return this
     }
 

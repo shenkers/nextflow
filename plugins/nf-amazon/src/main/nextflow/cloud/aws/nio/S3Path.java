@@ -72,6 +72,8 @@ public class S3Path implements Path, TagAwareFile {
 
 	private String storageClass;
 
+	public Boolean cache = false;
+
 	/**
 	 * path must be a string of the form "/{bucket}", "/{bucket}/{key}" or just
 	 * "{key}".
@@ -544,6 +546,10 @@ public class S3Path implements Path, TagAwareFile {
 	@Override
 	public void setStorageClass(String storageClass) {
 		this.storageClass = storageClass;
+	}
+
+	public void setCache(Boolean cache) {
+		this.cache = cache;
 	}
 
 	public List<Tag> getTagsList() {

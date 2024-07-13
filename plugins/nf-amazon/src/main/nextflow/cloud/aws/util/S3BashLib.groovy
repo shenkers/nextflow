@@ -38,6 +38,7 @@ class S3BashLib extends BashFunLib<S3BashLib> {
     private String s5cmdPath
     private String acl = ''
     private String requesterPays = ''
+    private String cache = ''
 
     S3BashLib withCliPath(String cliPath) {
         if( cliPath )
@@ -90,6 +91,11 @@ class S3BashLib extends BashFunLib<S3BashLib> {
         return this
     }
 
+    S3BashLib withCache(String cache) {
+        this.cache = cache
+        return this
+    }
+
     protected String retryEnv() {
         if( !retryMode )
             return ''
@@ -131,6 +137,63 @@ class S3BashLib extends BashFunLib<S3BashLib> {
                 $cli s3 cp --only-show-errors "\$source" "\$target"
             fi
         }
+        export -f nxf_s3_download
+
+        export cache_dir='$cache'
+        export cache_state='$cache/state'
+
+        mkdir -p \$cache_dir || true
+        touch \$cache_state || true
+
+        search_cache() {
+            s3path=\$1
+            cache_key=\$( awk -v key="\$s3path" '\$0==key {print NR}' \$cache_state )
+            echo \$cache_key
+        }
+        export -f search_cache
+
+        add_cache_key() {
+            s3path=\$1
+            #cache_key=\$( awk -v key=\$s3path 'BEGIN{FS=","} \$1==key {print \$2}' cache_state )
+            cache_key=\$( search_cache "\$s3path" )
+
+            if [[ -z "\${cache_key}" ]];
+                then
+                    #echo key not found
+                    echo "\$s3path" >> \$cache_state
+                #else
+                    #echo key found: \$cache_key
+            fi
+
+            cache_key=\$( search_cache "\$s3path" )
+
+            echo \$cache_key
+        }
+        export -f add_cache_key
+
+        stage_object() {
+            s3path=\$1
+            cache_object=\$2
+            if [ ! -e \$cache_object ]; then
+                nxf_s3_download "\$s3path" \$cache_object
+            fi
+        }
+        export -f stage_object
+
+        cache_object() {
+            s3path=\$1
+            object_link=\$2
+            state_lock=\${cache_state}.lock
+            cache_key=\$( flock \${state_lock} bash -c "add_cache_key \$s3path" )
+            object_lock=\${cache_dir}/\${cache_key}.lock
+            cache_object=\${cache_dir}/\${cache_key}
+            flock \${object_lock} bash -c "stage_object \$s3path \$cache_object"
+            if [ -z "\$object_link" ]; then
+                object_link=\$( basename "\$s3path" )
+            fi
+            ln -s \$cache_object "\$object_link"
+        }
+
         """.stripIndent(true)
     }
 
@@ -194,6 +257,7 @@ class S3BashLib extends BashFunLib<S3BashLib> {
                 .withS5cmdPath( opts.s5cmdPath )
                 .withAcl( opts.s3Acl )
                 .withRequesterPays( opts.requesterPays )
+                .withCache( opts.cache )
     }
 
     static String script(AwsOptions opts) {

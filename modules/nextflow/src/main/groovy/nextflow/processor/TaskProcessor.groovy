@@ -2156,6 +2156,7 @@ class TaskProcessor {
                 Integer num = allNames.getOrCreate(item.stageName, 0) +1
                 allNames.put(item.stageName,num)
             }
+            resolved.storePath.each{ if( it.hasProperty('cache') ) it.cache = fileParam.cache }
 
             // add the value to the task instance context
             task.setInput(param, resolved)

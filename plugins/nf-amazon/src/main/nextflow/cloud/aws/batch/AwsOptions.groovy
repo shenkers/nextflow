@@ -161,4 +161,8 @@ class AwsOptions implements CloudTransferOptions {
         return awsConfig.batchConfig.getExecutionRole()
     }
 
+    String getCache() {
+        return awsConfig.batchConfig.cache
+    }
+
 }

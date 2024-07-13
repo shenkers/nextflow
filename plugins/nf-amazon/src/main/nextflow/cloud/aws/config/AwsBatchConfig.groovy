@@ -94,6 +94,11 @@ class AwsBatchConfig implements CloudTransferOptions {
      */
     boolean fargateMode
 
+    /**
+     * The location at which files should be cached between task executions
+     */
+    String cache
+
     /*
      * only for testing
      */
@@ -114,6 +119,7 @@ class AwsBatchConfig implements CloudTransferOptions {
         shareIdentifier = opts.shareIdentifier
         schedulingPriority = opts.schedulingPriority as Integer ?: 0
         executionRole = opts.executionRole
+        cache = opts.cache
         if( retryMode == 'built-in' )
             retryMode = null // this force falling back on NF built-in retry mode instead of delegating to AWS CLI tool
         if( retryMode && retryMode !in AwsOptions.VALID_RETRY_MODES )
